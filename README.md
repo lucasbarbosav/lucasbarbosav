@@ -31,7 +31,7 @@ rebaixa os brutos; `--recalcular` refaz só o tratamento a partir do cache.
 Testes de unidade (fixtures sintéticas, não alimentam nenhum gráfico):
 
 ```bash
-./venv/bin/python tests/test_consumidor_gov.py
+./venv/bin/python tests/run.py
 ```
 
 ## Estrutura
@@ -80,11 +80,25 @@ estimar, interpolar ou preencher lacuna. Não há dado sintético em `data/clean
 
 | # | Fonte | Uso | Situação |
 |---|---|---|---|
-| 1 | [DataJud — API Pública (CNJ)](https://datajud-wiki.cnj.jus.br/api-publica) | tendência judicial por assunto/classe/tribunal | pendente |
+| 1 | [DataJud — API Pública (CNJ)](https://datajud-wiki.cnj.jus.br/api-publica) | tendência judicial por assunto/classe/tribunal | implementada¹ |
 | 2 | [consumidor.gov.br (Senacon/MJ)](https://dados.mj.gov.br/dataset/reclamacoes-do-consumidor-gov-br) | recorte B2C **por empresa** | implementada |
 | 3 | [Ouvidoria da ANTT](https://www.gov.br/antt/pt-br/canais-atendimento/ouvidoria) | reclamações do setor (parse de PDF) | pendente |
 | 4 | [Painel dos Grandes Litigantes (CNJ)](https://www.cnj.jus.br/primeira-versao-de-painel-sobre-grandes-litigantes-no-brasil-e-lancada/) | checagem de concentração | pendente |
 | 5 | [Dados abertos ANTT](https://dados.antt.gov.br/dataset/transporte-rodoviario-de-passageiros) / ANAC | passageiros transportados (denominador) | pendente |
+
+¹ Requer `DATAJUD_API_KEY` no `.env` e `docs/tpu_dicionario.csv` gerado a partir do SGT/CNJ
+(veja `docs/tpu_como_obter.md`). Sem os dois, a etapa para com erro instrutivo em vez de rodar
+com códigos adivinhados.
+
+Antes da coleta em massa, rode a consulta piloto e confira a amostra:
+
+```bash
+./venv/bin/python -m src.datajud --piloto --alias tjsp --ano 2024 --mes 1 --limite 200
+```
+
+Ela grava a resposta crua em `data/raw/datajud/`, imprime os campos realmente presentes no
+`_source` — é assim que o layout do documento se confirma — e mostra as primeiras linhas já
+achatadas e deduplicadas.
 
 O log completo, com URL exata e data de cada extração, fica em `docs/fontes.md`.
 

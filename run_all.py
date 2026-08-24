@@ -27,10 +27,17 @@ class Etapa:
     descricao: str
     produz: tuple[str, ...]  # parquets em data/clean/ (sem extensao)
     executar: Callable[..., object]
+    requisitos: tuple[str, ...] = ()  # o que precisa existir antes de rodar
 
 
 def _consumidor(refresh: bool):
     from src.consumidor_gov import executar
+
+    return executar(refresh=refresh)
+
+
+def _datajud(refresh: bool):
+    from src.datajud import executar
 
     return executar(refresh=refresh)
 
@@ -47,13 +54,28 @@ ETAPAS: list[Etapa] = [
         ),
         executar=_consumidor,
     ),
+    Etapa(
+        nome="datajud",
+        descricao="Fonte 1 — DataJud/CNJ: volume judicial por assunto, classe e tribunal",
+        produz=(
+            "datajud_b2c",
+            "datajud_regulatorio",
+            "datajud_b2c_serie_mensal",
+            "datajud_b2c_por_assunto",
+            "datajud_b2c_por_orgao",
+        ),
+        executar=_datajud,
+        requisitos=(
+            "docs/tpu_dicionario.csv (gere com `python -m src.tpu`; veja docs/tpu_como_obter.md)",
+            "DATAJUD_API_KEY no .env (chave publica divulgada pelo CNJ)",
+        ),
+    ),
 ]
 
 # Etapas ainda nao implementadas, listadas para nao dar a impressao de que o
 # pipeline esta completo. Serao adicionadas a ETAPAS conforme forem entregues.
 PENDENTES = {
     "demanda": "Fonte 5 — ANTT/ANAC: passageiros transportados (denominador por 100 mil)",
-    "datajud": "Fonte 1 — DataJud/CNJ: volume judicial por assunto, classe e tribunal",
     "antt_ouvidoria": "Fonte 3 — ANTT Ouvidoria: manifestacoes (CX separado de Passe Livre)",
     "grandes_litigantes": "Fonte 4 — CNJ: checagem de concentracao entre grandes reus",
     "graficos": "Graficos em output/charts/ com rodape de proveniencia",
@@ -69,6 +91,8 @@ def listar() -> None:
     print("\nEtapas implementadas:")
     for e in ETAPAS:
         print(f"  [{'x' if _completa(e) else ' '}] {e.nome:20} {e.descricao}")
+        for req in e.requisitos:
+            print(f"      requer: {req}")
     print("\nEtapas pendentes (ainda nao implementadas):")
     for nome, desc in PENDENTES.items():
         print(f"  [ ] {nome:20} {desc}")
