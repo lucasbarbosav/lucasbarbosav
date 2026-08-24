@@ -1,0 +1,9 @@
+# Pipeline judicializacao do consumo - transporte rodoviario interestadual
+requests>=2.31
+pandas>=2.2
+pyarrow>=16.0
+matplotlib>=3.8
+plotly>=5.22
+pdfplumber>=0.11
+tenacity>=8.3
+python-dotenv>=1.0

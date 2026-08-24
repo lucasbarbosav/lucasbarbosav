@@ -1,0 +1,15 @@
+# segredos
+.env
+
+# dados brutos (baixados; nao versionar)
+data/raw/
+
+# ambiente
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# artefatos temporarios
+.DS_Store
+*.log
