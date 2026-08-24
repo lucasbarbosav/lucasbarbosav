@@ -1,0 +1,38 @@
+{
+  "_convencao": "Campos tri-estado usam 'sim' | 'nao' | 'nao_informado'. 'nao_informado' = o assunto NAO foi mencionado no texto; 'nao' = foi explicitamente negado. Jamais preencher nulo com palpite.",
+  "_versao": "v0 (pos-descoberta, pre-calibracao)",
+  "campos": {
+    "categoria_comprada": "texto livre curto (ex.: 'leito cama', 'semileito', 'executivo') ou 'nao_informado'",
+    "categoria_viajada": "idem — a categoria em que o passageiro de fato viajou",
+    "trecho_origem_destino": "'ORIGEM -> DESTINO' se dito no texto, senao 'nao_informado' (o estruturado cobre a maioria)",
+    "duracao_interrupcao_faixa": "'<1h' | '1-3h' | '3-6h' | '>6h' | 'nao_informado'",
+    "troca_de_veiculo": "sim | nao | nao_informado",
+    "retido_rodovia_terminal": "sim | nao | nao_informado",
+    "perda_de_conexao": "sim | nao | nao_informado",
+    "viagem_concluida": "sim | nao | nao_informado",
+    "atraso_chegada_horas": "numero (horas) ou null",
+    "gasto_comprovado": "sim | nao | nao_informado",
+    "hospedagem_necessaria": "sim | nao | nao_informado",
+    "qualidade_informacao_ocorrencia": "boa | parcial | ausente | nao_informado — o passageiro foi informado DURANTE o evento?",
+    "passou_por_pendencia_interna": "sim | nao — houve comentario interno de encaminhamento, espera de area, ou mencao a sistema interno (Fluig/GLPI)?",
+    "area_destino": "texto (ex.: 'Financeiro', 'Operacional', 'TI', 'filial X') ou 'nao_informado'",
+    "houve_retorno_da_area": "sim | nao | nao_aplicavel — a area respondeu dentro do ticket antes do fechamento?",
+    "oferta_texto": "o que a thread mostra que foi de fato ofertado (ex.: 'reembolso da diferenca', 'cortesia', 'nada ofertado') ou 'nao_informado'",
+    "oferta_valor_texto": "valor em R$ se mencionado no texto (numero, ex. 316.68) ou null",
+    "mencionou_advogado": "sim | nao",
+    "mencionou_procon": "sim | nao",
+    "mencionou_processo_ou_danos_morais": "sim | nao",
+    "mencionou_reclame_aqui_ou_consumidorgov": "sim | nao",
+    "tom_ameaca_juridica": "nenhum | leve | explicito",
+    "extracao_confianca": "alta | media | baixa",
+    "evidencia": "objeto {campo: trecho de ATE 15 palavras ou parafrase curta} para cada atributo nao-obvio",
+    "campos_ausentes": "lista dos campos que ficaram nao_informado",
+    "leak_mention": "true se o texto mencionar desfecho POSTERIOR ao atendimento (processo ajuizado, resultado judicial); usado so para excluir texto, nunca como feature"
+  },
+  "_computados_fora_do_modelo": {
+    "oferta_campo": "cf_solucao do Zoho (estruturado)",
+    "divergencia_campo_texto": "oferta_campo vazio E oferta_texto mostra oferta real",
+    "tempo_ate_primeira_resposta_h": "primeira thread direction=out menos createdTime",
+    "cliente_reincidente_janela": "contactId com ticket anterior na janela (run completo)"
+  }
+}
