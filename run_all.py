@@ -36,6 +36,12 @@ def _consumidor(refresh: bool):
     return executar(refresh=refresh)
 
 
+def _demanda(refresh: bool):
+    from src.demanda import executar
+
+    return executar(refresh=refresh)
+
+
 def _datajud(refresh: bool):
     from src.datajud import executar
 
@@ -53,6 +59,16 @@ ETAPAS: list[Etapa] = [
             "consumidor_gov_total_segmentos",
         ),
         executar=_consumidor,
+    ),
+    Etapa(
+        nome="demanda",
+        descricao="Fonte 5 — ANTT/ANAC: passageiros transportados (denominador por 100 mil)",
+        produz=("demanda_passageiros",),
+        executar=_demanda,
+        requisitos=(
+            "opcional: CSV de passageiros da ANAC para normalizar o benchmark aereo "
+            "(`python -m src.demanda --anac-csv <arquivo>`)",
+        ),
     ),
     Etapa(
         nome="datajud",
@@ -75,7 +91,6 @@ ETAPAS: list[Etapa] = [
 # Etapas ainda nao implementadas, listadas para nao dar a impressao de que o
 # pipeline esta completo. Serao adicionadas a ETAPAS conforme forem entregues.
 PENDENTES = {
-    "demanda": "Fonte 5 — ANTT/ANAC: passageiros transportados (denominador por 100 mil)",
     "antt_ouvidoria": "Fonte 3 — ANTT Ouvidoria: manifestacoes (CX separado de Passe Livre)",
     "grandes_litigantes": "Fonte 4 — CNJ: checagem de concentracao entre grandes reus",
     "graficos": "Graficos em output/charts/ com rodape de proveniencia",
