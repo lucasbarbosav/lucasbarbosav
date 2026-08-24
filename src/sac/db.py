@@ -42,11 +42,15 @@ CREATE TABLE IF NOT EXISTS atributos (
     passou_por_pendencia_interna TEXT,
     area_destino TEXT,
     houve_retorno_da_area TEXT,
-    -- oferta: os dois lados
+    -- oferta: os dois lados + funil (ofertado -> escolhido -> executado)
     oferta_campo TEXT,
     oferta_texto TEXT,
     oferta_valor_texto TEXT,
+    oferta_opcoes TEXT,            -- JSON: lista de opcoes ofertadas
+    oferta_escolhida_pelo_cliente TEXT,
+    oferta_executada_no_ticket TEXT,
     divergencia_campo_texto INTEGER,
+    tempo_primeira_resposta_substantiva_h REAL,
     -- sinais expressos no atendimento (pre-desfecho, permitidos)
     mencionou_advogado TEXT, mencionou_procon TEXT,
     mencionou_processo_ou_danos_morais TEXT,

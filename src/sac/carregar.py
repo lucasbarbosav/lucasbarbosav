@@ -31,6 +31,10 @@ ENUMS = {
     "mencionou_reclame_aqui_ou_consumidorgov": {"sim", "nao"},
     "tom_ameaca_juridica": {"nenhum", "leve", "explicito"},
     "extracao_confianca": {"alta", "media", "baixa"},
+    "oferta_executada_no_ticket": TRI,
+    "oferta_escolhida_pelo_cliente": {
+        "reembolso_diferenca", "cupom_50", "cortesia", "estorno_cartao",
+        "reembolso_integral", "outra", "recusou", "sem_resposta", "nao_informado"},
 }
 TEXTO_LIVRE = ["categoria_comprada", "categoria_viajada", "trecho_origem_destino",
                "area_destino", "oferta_texto"]
@@ -56,15 +60,24 @@ def _valida(ext: dict, erros: list[str]) -> dict:
     return out
 
 
-def _primeira_resposta_h(meta: dict, timeline: list[dict]) -> float | None:
+def _horas_desde_criacao(meta: dict, quando: str | None) -> float | None:
+    if not quando:
+        return None
     try:
         criado = datetime.fromisoformat(meta["createdTime"].replace("Z", "+00:00"))
-        for item in timeline:
-            if item.get("tipo") == "thread" and item.get("direcao") == "out":
-                t = datetime.fromisoformat(item["quando"].replace("Z", "+00:00"))
-                return round((t - criado).total_seconds() / 3600, 2)
+        s = str(quando).strip().replace(" UTC", "").replace("Z", "+00:00")
+        t = datetime.fromisoformat(s)
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=criado.tzinfo)
+        return round((t - criado).total_seconds() / 3600, 2)
     except (KeyError, ValueError, TypeError):
-        pass
+        return None
+
+
+def _primeira_resposta_h(meta: dict, timeline: list[dict]) -> float | None:
+    for item in timeline:
+        if item.get("tipo") == "thread" and item.get("direcao") == "out":
+            return _horas_desde_criacao(meta, item.get("quando"))
     return None
 
 
@@ -92,7 +105,9 @@ def carregar(tema: str, dir_brutos: Path, dir_extraidos: Path, caminho_db=None) 
 
             oferta_campo = meta.get("solucao")
             oferta_texto = (ext.get("oferta_texto") or "nao_informado").strip()
-            divergencia = int(not oferta_campo and oferta_texto.lower() not in SEM_OFERTA)
+            houve_oferta_no_texto = bool(ext.get("oferta_opcoes")) or \
+                oferta_texto.lower() not in SEM_OFERTA
+            divergencia = int(not oferta_campo and houve_oferta_no_texto)
 
             created = meta.get("createdTime", "")
             linha = {
@@ -111,8 +126,11 @@ def carregar(tema: str, dir_brutos: Path, dir_extraidos: Path, caminho_db=None) 
                 "oferta_campo": oferta_campo,
                 "oferta_texto": redigir_pii(oferta_texto),
                 "oferta_valor_texto": ext.get("oferta_valor_texto"),
+                "oferta_opcoes": json.dumps(ext.get("oferta_opcoes") or [], ensure_ascii=False),
                 "divergencia_campo_texto": divergencia,
                 "tempo_ate_primeira_resposta_h": _primeira_resposta_h(meta, bruto.get("timeline", [])),
+                "tempo_primeira_resposta_substantiva_h": _horas_desde_criacao(
+                    meta, ext.get("quando_primeira_resposta_substantiva")),
                 "cliente_reincidente_janela": None,
                 "leak_mention": int(bool(ext.get("leak_mention"))),
                 "campos_ausentes": json.dumps(ext.get("campos_ausentes") or [], ensure_ascii=False),

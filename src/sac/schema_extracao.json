@@ -1,6 +1,6 @@
 {
   "_convencao": "Campos tri-estado usam 'sim' | 'nao' | 'nao_informado'. 'nao_informado' = o assunto NAO foi mencionado no texto; 'nao' = foi explicitamente negado. Jamais preencher nulo com palpite.",
-  "_versao": "v0 (pos-descoberta, pre-calibracao)",
+  "_versao": "v1 (pos-leitura exploratoria dos 12 tickets; a validar na calibracao dos 100)",
   "campos": {
     "categoria_comprada": "texto livre curto (ex.: 'leito cama', 'semileito', 'executivo') ou 'nao_informado'",
     "categoria_viajada": "idem — a categoria em que o passageiro de fato viajou",
@@ -18,7 +18,11 @@
     "area_destino": "texto (ex.: 'Financeiro', 'Operacional', 'TI', 'filial X') ou 'nao_informado'",
     "houve_retorno_da_area": "sim | nao | nao_aplicavel — a area respondeu dentro do ticket antes do fechamento?",
     "oferta_texto": "o que a thread mostra que foi de fato ofertado (ex.: 'reembolso da diferenca', 'cortesia', 'nada ofertado') ou 'nao_informado'",
-    "oferta_valor_texto": "valor em R$ se mencionado no texto (numero, ex. 316.68) ou null",
+    "oferta_valor_texto": "valor em R$ se mencionado no texto (numero, ex. 316.68; se por passageiro, o valor POR passageiro) ou null",
+    "oferta_opcoes": "lista das opcoes ofertadas no ticket, entre: 'reembolso_diferenca', 'cupom_50', 'cortesia', 'estorno_cartao', 'reembolso_integral', 'outro'; [] se nada ofertado",
+    "oferta_escolhida_pelo_cliente": "'reembolso_diferenca' | 'cupom_50' | 'cortesia' | 'estorno_cartao' | 'reembolso_integral' | 'outra' | 'recusou' | 'sem_resposta' | 'nao_informado'",
+    "oferta_executada_no_ticket": "sim | nao | nao_informado — o ticket mostra a execucao (pagamento programado/comprovante, cupom enviado, cortesia registrada)?",
+    "quando_primeira_resposta_substantiva": "timestamp (copiado da timeline) da PRIMEIRA resposta humana do SAC com conteudo do caso — ignorar respostas automaticas, pedidos de dados padrao, 'ultima chamada' e bounces; null se nunca houve",
     "mencionou_advogado": "sim | nao",
     "mencionou_procon": "sim | nao",
     "mencionou_processo_ou_danos_morais": "sim | nao",
@@ -32,7 +36,15 @@
   "_computados_fora_do_modelo": {
     "oferta_campo": "cf_solucao do Zoho (estruturado)",
     "divergencia_campo_texto": "oferta_campo vazio E oferta_texto mostra oferta real",
-    "tempo_ate_primeira_resposta_h": "primeira thread direction=out menos createdTime",
+    "tempo_ate_primeira_resposta_h": "primeira thread direction=out menos createdTime (inclui autorespostas)",
+    "tempo_primeira_resposta_substantiva_h": "quando_primeira_resposta_substantiva menos createdTime",
     "cliente_reincidente_janela": "contactId com ticket anterior na janela (run completo)"
-  }
+  },
+  "_notas_da_leitura_exploratoria": [
+    "Em 0800/WhatsApp/Agencias o texto do cliente e narracao do atendente (3a pessoa) ou formulario — extrair normalmente dessa voz indireta.",
+    "A oferta e um template rigido (ANTT 6.033) com 2 opcoes; o valor R$ e o unico campo variavel. A decisao de merito ('reclamacao procede') vive em comentario interno.",
+    "PENDENCIA INTERNA aparece como thread out para listas de e-mail internas (util.com.br/realexpresso.com.br) — conta como passou_por_pendencia_interna=sim; resposta de alguem da area no ticket = houve_retorno_da_area=sim.",
+    "Ruido a ignorar como fala: respostas automaticas, 'ultima chamada 6 horas', bounces, pedidos de avaliacao, historico citado repetido dentro de cada e-mail.",
+    "threadCount infla com automaticos e historico citado; nao usar como proxy de ida-e-volta real."
+  ]
 }
