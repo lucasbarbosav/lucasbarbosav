@@ -136,6 +136,18 @@ class ClienteDataJud:
                 f"Confira a chave e os endpoints em {WIKI_ENDPOINTS}."
             ) from exc
 
+    def contar(self, alias: str, query: dict[str, Any]) -> int:
+        """Conta documentos sem baixa-los (`size: 0`).
+
+        Barato e exato para totais, mas conta DOCUMENTOS, nao processos
+        distintos: o DataJud guarda um documento por processo *por grau*. Use
+        sempre com filtro de grau (ver `serie_participacao`) quando o numero
+        for comparado com outra contagem.
+        """
+        resp = self._pagina(alias, {"size": 0, "query": query, "track_total_hits": True})
+        total = resp.get("hits", {}).get("total", {})
+        return int(total.get("value", 0) if isinstance(total, dict) else total or 0)
+
     def buscar(
         self, alias: str, query: dict[str, Any], tamanho: int = TAMANHO_PAGINA
     ) -> Iterator[dict[str, Any]]:
@@ -187,6 +199,7 @@ def montar_query(
     inicio: str | None = None,
     fim: str | None = None,
     orgaos: list[int] | None = None,
+    graus: list[str] | None = None,
 ) -> dict[str, Any]:
     """Monta o filtro booleano. Datas em AAAA-MM-DD."""
     must: list[dict[str, Any]] = []
@@ -196,6 +209,8 @@ def montar_query(
         must.append({"terms": {"classe.codigo": list(classes)}})
     if orgaos:
         must.append({"terms": {"orgaoJulgador.codigo": list(orgaos)}})
+    if graus:
+        must.append({"terms": {"grau": list(graus)}})
     if inicio or fim:
         faixa: dict[str, str] = {}
         if inicio:
@@ -319,6 +334,40 @@ def por_orgao(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def serie_participacao(
+    aliases: list[str], assuntos: list[int], inicio: str, fim: str, grau: str = "G1"
+) -> pd.DataFrame:
+    """Participacao do consumo no total de casos novos, mes a mes.
+
+    Numerador e denominador sao medidos do MESMO jeito — contagem de documentos
+    no mesmo `grau` — para que a razao signifique alguma coisa. Comparar
+    processos deduplicados (numerador) com documentos (denominador) daria uma
+    participacao artificialmente baixa, porque o denominador contaria cada
+    processo uma vez por grau.
+    """
+    cliente = ClienteDataJud()
+    linhas = []
+    for alias in aliases:
+        for periodo in pd.date_range(inicio, fim, freq="MS"):
+            ini = periodo.strftime("%Y-%m-%d")
+            fimm = (periodo + pd.offsets.MonthEnd(1)).strftime("%Y-%m-%d")
+            base = dict(inicio=ini, fim=fimm, graus=[grau])
+            total = cliente.contar(alias, montar_query(**base))
+            consumo = cliente.contar(alias, montar_query(assuntos=assuntos, **base))
+            if total <= 0:
+                log.warning("%s %s: total zero — mes ignorado, nao zerado.", alias, ini)
+                continue
+            linhas.append({
+                "alias": alias, "tribunal": alias.upper(), "uf": uf_do_alias(alias),
+                "universo": universo_do_alias(alias), "grau": grau,
+                "ano": periodo.year, "mes": periodo.month,
+                "documentos_total": total, "documentos_consumo": consumo,
+                "participacao_consumo": consumo / total,
+            })
+            log.info("%s %s: consumo %d / total %d", alias, ini, consumo, total)
+    return pd.DataFrame(linhas)
+
+
 # --------------------------------------------------------------------------
 # Consulta piloto
 # --------------------------------------------------------------------------
@@ -437,6 +486,15 @@ def executar(refresh: bool = False, inicio: str | None = None, fim: str | None =
                    "N vezes. Para totais use a serie mensal. " + ressalva,
         derivado_de=["data/clean/datajud_b2c.parquet"],
     )[1]
+    participacao = serie_participacao(list(TRIBUNAIS_ESTADUAIS.values()), assuntos, inicio, fim)
+    if not participacao.empty:
+        salvos["datajud_participacao"] = salvar_parquet(
+            participacao, "datajud_participacao_consumo", fonte=FONTE,
+            url=BASE_URL.format(alias="{alias}"), ano_base=periodo,
+            observacao="Participacao do consumo no total de casos novos. Numerador e "
+                       "denominador contam DOCUMENTOS no mesmo grau (G1), nao processos "
+                       "deduplicados — so assim a razao e comparavel. " + ressalva,
+        )[1]
     salvos["datajud_b2c_orgao"] = salvar_parquet(
         por_orgao(b2c), "datajud_b2c_por_orgao", fonte=FONTE,
         url=BASE_URL.format(alias="{alias}"), ano_base=periodo,

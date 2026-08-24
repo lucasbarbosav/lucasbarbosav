@@ -3,8 +3,8 @@
 Pipeline reprodutível que mede a judicialização do consumo no Brasil, isola o setor de
 transporte rodoviário de passageiros e avalia sinais de litigância de massa.
 
-**Estado**: em construção. Veja `python run_all.py --listar` para o que já está pronto
-e o que falta.
+**Estado**: as cinco fontes, os gráficos e o dashboard estão implementados. Rode
+`python run_all.py --listar` para ver o estado de cada etapa.
 
 ## Perguntas que o pipeline responde
 
@@ -42,7 +42,8 @@ data/raw/          brutos baixados (não versionados)
 data/clean/        datasets tratados em Parquet + .meta.json de proveniência
 output/charts/     gráficos, cada um com rodapé de fonte/ano-base/data de extração
 output/dashboard/  index.html estático (Plotly embutido, sem backend)
-docs/              fontes.md (log append-only), log_extracoes.csv, dicionários
+docs/              fontes.md (log append-only), log_extracoes.csv, dicionário de dados,
+                   passos manuais (TPU e Grandes Litigantes)
 tests/             testes de unidade da lógica de transformação
 ```
 
@@ -82,9 +83,16 @@ estimar, interpolar ou preencher lacuna. Não há dado sintético em `data/clean
 |---|---|---|---|
 | 1 | [DataJud — API Pública (CNJ)](https://datajud-wiki.cnj.jus.br/api-publica) | tendência judicial por assunto/classe/tribunal | implementada¹ |
 | 2 | [consumidor.gov.br (Senacon/MJ)](https://dados.mj.gov.br/dataset/reclamacoes-do-consumidor-gov-br) | recorte B2C **por empresa** | implementada |
-| 3 | [Ouvidoria da ANTT](https://www.gov.br/antt/pt-br/canais-atendimento/ouvidoria) | reclamações do setor (parse de PDF) | pendente |
-| 4 | [Painel dos Grandes Litigantes (CNJ)](https://www.cnj.jus.br/primeira-versao-de-painel-sobre-grandes-litigantes-no-brasil-e-lancada/) | checagem de concentração | pendente |
-| 5 | [Dados abertos ANTT](https://dados.antt.gov.br/dataset/transporte-rodoviario-de-passageiros) / ANAC | passageiros transportados (denominador) | pendente |
+| 3 | [Ouvidoria da ANTT](https://www.gov.br/antt/pt-br/canais-atendimento/ouvidoria) | reclamações do setor (parse de PDF) | implementada² |
+| 4 | [Painel dos Grandes Litigantes (CNJ)](https://painelgrandeslitigantes.cnj.jus.br/) | checagem de concentração | importação manual³ |
+| 5 | [Dados abertos ANTT](https://dados.antt.gov.br/dataset/transporte-rodoviario-de-passageiros) / ANAC | passageiros transportados (denominador) | implementada⁴ |
+
+² O parser de tabela em PDF é heurístico e o layout dos relatórios muda entre edições;
+confira o resultado contra o PDF antes de citar qualquer número.
+³ O painel do CNJ não tem API consultável. Exporte a tabela e importe — o passo está em
+`docs/grandes_litigantes_como_obter.md`. Optamos por não raspar o painel: um scraper de
+painel interativo quebra em silêncio, e número errado que ninguém percebe é pior que passo manual.
+⁴ A ANAC entra por importação manual (`--anac-csv`); não há URL adivinhada no código.
 
 ¹ Requer `DATAJUD_API_KEY` no `.env` e `docs/tpu_dicionario.csv` gerado a partir do SGT/CNJ
 (veja `docs/tpu_como_obter.md`). Sem os dois, a etapa para com erro instrutivo em vez de rodar

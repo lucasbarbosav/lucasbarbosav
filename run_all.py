@@ -42,6 +42,30 @@ def _demanda(refresh: bool):
     return executar(refresh=refresh)
 
 
+def _antt_ouvidoria(refresh: bool):
+    from src.antt_ouvidoria import executar
+
+    return executar(refresh=refresh)
+
+
+def _grandes_litigantes(refresh: bool):
+    from src.grandes_litigantes import executar
+
+    return executar(refresh=refresh)
+
+
+def _graficos(refresh: bool):
+    from src.charts import executar
+
+    return executar(refresh=refresh)
+
+
+def _dashboard(refresh: bool):
+    from src.dashboard import executar
+
+    return executar(refresh=refresh)
+
+
 def _datajud(refresh: bool):
     from src.datajud import executar
 
@@ -86,20 +110,46 @@ ETAPAS: list[Etapa] = [
             "DATAJUD_API_KEY no .env (chave publica divulgada pelo CNJ)",
         ),
     ),
+    Etapa(
+        nome="antt_ouvidoria",
+        descricao="Fonte 3 — ANTT Ouvidoria: manifestacoes (CX separado de Passe Livre)",
+        produz=("antt_ouvidoria_temas", "antt_ouvidoria_categorias"),
+        executar=_antt_ouvidoria,
+    ),
+    Etapa(
+        nome="grandes_litigantes",
+        descricao="Fonte 4 — CNJ: checagem de concentracao entre grandes reus",
+        produz=("grandes_litigantes",),
+        executar=_grandes_litigantes,
+        requisitos=(
+            "exportacao manual do painel (`python -m src.grandes_litigantes --de-csv <arquivo>`); "
+            "veja docs/grandes_litigantes_como_obter.md",
+        ),
+    ),
+    Etapa(
+        nome="graficos",
+        descricao="Graficos em output/charts/ com rodape de proveniencia",
+        produz=(),  # nao produz Parquet: sempre redesenha o que houver
+        executar=_graficos,
+    ),
+    Etapa(
+        nome="dashboard",
+        descricao="Dashboard estatico em output/dashboard/index.html",
+        produz=(),
+        executar=_dashboard,
+    ),
 ]
 
 # Etapas ainda nao implementadas, listadas para nao dar a impressao de que o
 # pipeline esta completo. Serao adicionadas a ETAPAS conforme forem entregues.
 PENDENTES = {
-    "antt_ouvidoria": "Fonte 3 — ANTT Ouvidoria: manifestacoes (CX separado de Passe Livre)",
-    "grandes_litigantes": "Fonte 4 — CNJ: checagem de concentracao entre grandes reus",
-    "graficos": "Graficos em output/charts/ com rodape de proveniencia",
-    "dashboard": "Dashboard estatico em output/dashboard/index.html",
 }
 
 
 def _completa(etapa: Etapa) -> bool:
-    return all(existe_limpo(p) for p in etapa.produz)
+    # Etapa sem Parquet declarado (graficos, dashboard) e sempre refeita: ela
+    # depende do estado dos outros datasets, nao de um artefato proprio.
+    return bool(etapa.produz) and all(existe_limpo(p) for p in etapa.produz)
 
 
 def listar() -> None:
@@ -108,9 +158,10 @@ def listar() -> None:
         print(f"  [{'x' if _completa(e) else ' '}] {e.nome:20} {e.descricao}")
         for req in e.requisitos:
             print(f"      requer: {req}")
-    print("\nEtapas pendentes (ainda nao implementadas):")
-    for nome, desc in PENDENTES.items():
-        print(f"  [ ] {nome:20} {desc}")
+    if PENDENTES:
+        print("\nEtapas pendentes (ainda nao implementadas):")
+        for nome, desc in PENDENTES.items():
+            print(f"  [ ] {nome:20} {desc}")
     print()
 
 

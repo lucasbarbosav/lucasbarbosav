@@ -144,6 +144,19 @@ def test_max_paginas_trunca_explicitamente():
     assert len(list(cli.buscar("tjsp", montar_query()))) == 2
 
 
+def test_contar_usa_size_zero_e_track_total_hits():
+    cli = _ClienteFake([{"hits": {"total": {"value": 4321}, "hits": []}}])
+    assert cli.contar("tjsp", montar_query()) == 4321
+    corpo = cli.corpos[0]
+    assert corpo["size"] == 0            # nao baixa documento nenhum
+    assert corpo["track_total_hits"] is True  # sem isso o ES para de contar em 10k
+
+
+def test_filtro_por_grau():
+    q = montar_query(graus=["G1"], inicio="2024-01-01")
+    assert {"terms": {"grau": ["G1"]}} in q["bool"]["must"]
+
+
 if __name__ == "__main__":
     import traceback
     falhas = 0
