@@ -1,6 +1,12 @@
 {
   "_convencao": "Campos tri-estado usam 'sim' | 'nao' | 'nao_informado'. 'nao_informado' = o assunto NAO foi mencionado no texto; 'nao' = foi explicitamente negado. Jamais preencher nulo com palpite.",
-  "_versao": "v1 (pos-leitura exploratoria dos 12 tickets; a validar na calibracao dos 100)",
+  "_versao": "v1.1 (pos-calibracao: regras de desempate dos campos com menor concordancia entre passadas independentes)",
+  "_regras_de_desempate": {
+    "oferta_executada_no_ticket": "Se NADA foi ofertado no ticket, use 'nao' (a nao-execucao e observavel), reservando 'nao_informado' para quando houve oferta mas o ticket nao mostra se foi executada.",
+    "troca_de_veiculo": "'sim' quando o texto disser substituicao de veiculo por QUALQUER termo do dominio: 'massiva', 'SOS', 'socorro', 'contingencia', ou a resposta-padrao do SAC 'substituicao do veiculo' aplicada ao caso. Troca so de poltrona/classe no MESMO veiculo = 'nao'.",
+    "houve_retorno_da_area": "'nao_aplicavel' SOMENTE se passou_por_pendencia_interna='nao'. Se houve pendencia e ninguem da area respondeu no ticket, e 'nao'.",
+    "qualidade_informacao_ocorrencia": "So sobre o momento DO EVENTO (o passageiro foi avisado no embarque/durante?). Comunicacao posterior do SAC nao conta."
+  },
   "campos": {
     "categoria_comprada": "texto livre curto (ex.: 'leito cama', 'semileito', 'executivo') ou 'nao_informado'",
     "categoria_viajada": "idem — a categoria em que o passageiro de fato viajou",

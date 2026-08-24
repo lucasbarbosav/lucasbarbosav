@@ -89,6 +89,22 @@ mede menos o canal e mais o momento em que o atendente desiste de preencher o ca
 6. Divergências de valor entre formulário da agência e oferta do SAC (typos como
    R$ 5.970,00 por R$ 59,70 e R$ 11.099,00) — regra aplicada: vale o valor da oferta.
 
+## Concordância entre passadas independentes (30 tickets re-extraídos às cegas)
+
+Média: **96,5%** de acordo campo a campo. 13 dos 19 campos com 100%.
+Campos mais fracos e diagnóstico:
+
+| Campo | Acordo | Causa das divergências |
+|---|---|---|
+| oferta_executada_no_ticket | 76,7% | fronteira "nao" × "nao_informado" quando nada foi ofertado |
+| troca_de_veiculo | 83,3% | inferir "sim" de "massiva/SOS/contingência" ou exigir menção literal |
+| qualidade_informacao_ocorrencia | 90,0% | avaliar só o momento do evento × incluir comunicação posterior |
+| houve_retorno_da_area | 93,3% | "nao_aplicavel" × "nao" com pendência aberta |
+
+Todas são ambiguidade de REGRA, não de leitura — resolvidas com regras de desempate
+no schema v1.1 (`_regras_de_desempate` em `schema_extracao.json`). Nenhuma
+divergência em sinais jurídicos, pendência interna, valores ou leak.
+
 ## Próximo passo (gate da Seção 10)
 
 Auditoria manual do CSV (30 tickets contra as threads originais no Zoho). Só depois
