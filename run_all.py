@@ -54,6 +54,24 @@ def _grandes_litigantes(refresh: bool):
     return executar(refresh=refresh)
 
 
+def _desk_ingestao(refresh: bool):
+    from src.zoho_desk import executar
+
+    return executar(refresh=refresh)
+
+
+def _desk_entrega(refresh: bool):
+    from src.desk_entrega import executar
+
+    return executar(refresh=refresh)
+
+
+def _desk_paineis(refresh: bool):
+    from src.desk_charts import executar
+
+    return executar(refresh=refresh)
+
+
 def _graficos(refresh: bool):
     from src.charts import executar
 
@@ -125,6 +143,33 @@ ETAPAS: list[Etapa] = [
             "exportacao manual do painel (`python -m src.grandes_litigantes --de-csv <arquivo>`); "
             "veja docs/grandes_litigantes_como_obter.md",
         ),
+    ),
+    Etapa(
+        nome="desk_ingestao",
+        descricao="Fonte 6 — Zoho Desk: censo de tickets com pendência interna (cf_area_pi)",
+        produz=("desk_pi_tickets",),
+        executar=_desk_ingestao,
+        requisitos=(
+            "credencial OAuth do Zoho Desk no .env (docs/desk_como_obter_acesso.md) "
+            "ou export convertido (`python -m src.zoho_desk --export-dir <dir>`)",
+            "job longo (~42 mil chamadas de conversas): resumível, rode até completar",
+        ),
+    ),
+    Etapa(
+        nome="desk_entrega",
+        descricao="Censo — classificação da entrega da informação (SAC ⇄ áreas internas)",
+        produz=("desk_entrega_classificada",),
+        executar=_desk_entrega,
+        requisitos=(
+            "conversas no cache (etapa desk_ingestao completa)",
+            "opcional: `python -m src.desk_entrega --llm` para resolver os ambíguos",
+        ),
+    ),
+    Etapa(
+        nome="desk_paineis",
+        descricao="Painéis do censo em output/charts/ + tabela e evidências em output/desk/",
+        produz=(),
+        executar=_desk_paineis,
     ),
     Etapa(
         nome="graficos",

@@ -98,3 +98,38 @@ para conferência humana, não classificador.
 
 ⚠️ Ano sem denominador **não vira zero**: `analise.por_100k()` separa essas linhas num
 segundo quadro para inspeção.
+
+## Fonte 6 — Zoho Desk (censo de entrega da informação)
+
+### `desk_pi_tickets.parquet`
+Universo do censo: um registro por ticket com `cf_area_pi` preenchido no período.
+
+| coluna | tipo | descrição |
+|---|---|---|
+| `ticket_id` / `ticket_numero` | texto | id da API e nº de protocolo |
+| `criado_em`, `fechado_em` | texto ISO | timestamps do Desk (UTC) |
+| `status`, `status_tipo` | texto | estado do fluxo. **Não prova entrega de informação** |
+| `canal` | texto | canal de abertura (0800, WhatsApp, Agências…) |
+| `n_threads`, `n_comentarios` | inteiro | contadores do Desk |
+| `cf_area_pi` | texto | área interna acionada (Comercial, Operacional, Financeiro…) |
+| `cf_motivo`, `cf_submotivo`, `cf_detalhe_do_motivo` | texto | assunto em três níveis |
+| `cf_descricao_area_pi_n2` | texto | o pedido feito à área |
+| `cf_solucao` | texto | a OFERTA dada (Diferença Tarifária, Devolução…). **Não é entrega** |
+| `assunto` | texto | `cf_detalhe_do_motivo` quando preenchido, senão `cf_motivo` |
+
+### `desk_entrega_classificada.parquet`
+Resultado do censo: um registro por ticket classificado.
+
+| coluna | tipo | descrição |
+|---|---|---|
+| `estado` | texto | `entregue_no_desk` · `entregue_fora_do_desk` · `indeterminado` · `nao_entregue` |
+| `disparo_no_desk` | booleano | a pendência foi disparada de forma rastreável no Desk |
+| `canal_da_resposta` | texto | `email_interno`, `comentario` ou `cliente` |
+| `latencia_disparo_h` | decimal | horas entre a abertura do ticket e o disparo da pendência |
+| `latencia_area_h` | decimal | horas entre o disparo e o retorno da área (só onde rastreável) |
+| `retorno_cliente_falhou` | booleano | o aviso ao cliente voltou (bounce) |
+| `precisa_llm` | booleano | ambíguo aguardando a passada de LLM (`--llm`) |
+| `evidencia` / `evidencia_id` | texto | trecho e id do evento que sustenta a classificação |
+
+`indeterminado` é o **piso de incerteza** do censo: entrega provável fora do Desk sem
+rastro que confirme o conteúdo. Reportar sempre separado, nunca diluído.

@@ -4,6 +4,10 @@
 # dados brutos (baixados; nao versionar)
 data/raw/
 
+# tratados e saidas (regeneraveis; resumo do Desk contem texto de tickets)
+data/clean/
+output/
+
 # ambiente
 venv/
 __pycache__/

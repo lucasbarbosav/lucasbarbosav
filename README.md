@@ -76,6 +76,13 @@ estimar, interpolar ou preencher lacuna. Não há dado sintético em `data/clean
 - **Não-avaliada ≠ não-resolvida.** No consumidor.gov.br, reclamação sem avaliação do
   consumidor vira `NA`, não `False` — contá-la como não resolvida penalizaria quem tem
   muita reclamação sem avaliação.
+- **Oferta ≠ entrega de informação.** No Zoho Desk, `cf_solucao` registra a oferta
+  (Diferença Tarifária, Devolução, "Sem Oferta") e `status` é estado de fluxo; nenhum
+  dos dois prova que a área respondeu ao que o SAC pediu. Entrega só se mede no texto
+  das conversas — inclusive resposta negativa ("não localizado") **conta como entregue**.
+- **`indeterminado` é piso, não resto.** Entrega provável fora do Desk sem rastro do
+  conteúdo fica em `indeterminado` e é reportada separada. Diluí-la em "entregue" ou
+  "não entregue" produziria um número limpo demais para ser verdade.
 
 ## Fontes
 
@@ -86,6 +93,7 @@ estimar, interpolar ou preencher lacuna. Não há dado sintético em `data/clean
 | 3 | [Ouvidoria da ANTT](https://www.gov.br/antt/pt-br/canais-atendimento/ouvidoria) | reclamações do setor (parse de PDF) | implementada² |
 | 4 | [Painel dos Grandes Litigantes (CNJ)](https://painelgrandeslitigantes.cnj.jus.br/) | checagem de concentração | importação manual³ |
 | 5 | [Dados abertos ANTT](https://dados.antt.gov.br/dataset/transporte-rodoviario-de-passageiros) / ANAC | passageiros transportados (denominador) | implementada⁴ |
+| 6 | Zoho Desk (SAC Guanabara, portal `viajeguanabara`) | censo: taxa de entrega da informação SAC ⇄ áreas internas | implementada⁵ |
 
 ² O parser de tabela em PDF é heurístico e o layout dos relatórios muda entre edições;
 confira o resultado contra o PDF antes de citar qualquer número.
@@ -97,6 +105,13 @@ painel interativo quebra em silêncio, e número errado que ninguém percebe é 
 ¹ Requer `DATAJUD_API_KEY` no `.env` e `docs/tpu_dicionario.csv` gerado a partir do SGT/CNJ
 (veja `docs/tpu_como_obter.md`). Sem os dois, a etapa para com erro instrutivo em vez de rodar
 com códigos adivinhados.
+
+⁵ Requer credencial OAuth do Zoho Desk no `.env` **ou** um export (Data Backup)
+convertido — veja `docs/desk_como_obter_acesso.md`. Etapas: `desk_ingestao`
+(censo de tickets com `cf_area_pi` + conversas, job de horas, resumível),
+`desk_entrega` (classificação por regras + fila de ambíguos para LLM) e
+`desk_paineis` (painéis + `output/desk/resumo.md` com tabela e trechos-evidência).
+As regras foram calibradas contra tickets reais (`docs/desk_calibracao.md`).
 
 Antes da coleta em massa, rode a consulta piloto e confira a amostra:
 
