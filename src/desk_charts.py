@@ -110,13 +110,22 @@ def _barras_empilhadas(ax, tab: pd.DataFrame) -> None:
 # --------------------------------------------------------------------------
 # Painéis
 # --------------------------------------------------------------------------
+def _rotulo_universo(n: int) -> str:
+    """Subtítulo do painel geral. DESK_ROTULO_UNIVERSO permite rodar os mesmos
+    painéis sobre uma amostra sem rotulá-la de censo ({n} vira o tamanho)."""
+    import os
+
+    modelo = os.getenv(
+        "DESK_ROTULO_UNIVERSO",
+        "Censo de {n} tickets com pendência interna (cf_area_pi preenchido)",
+    )
+    return modelo.format(n=f"{n:,}".replace(",", "."))
+
+
 def entrega_geral() -> str:
     df, meta = _carregar()
     freq = df["estado"].value_counts()
-    fig, ax = _figura(
-        "A informação pedida à área voltou?",
-        f"Censo de {len(df):,} tickets com pendência interna (cf_area_pi preenchido)".replace(",", "."),
-    )
+    fig, ax = _figura("A informação pedida à área voltou?", _rotulo_universo(len(df)))
     vals = [freq.get(e, 0) / len(df) for e in ESTADOS][::-1]
     nomes = [ROTULO[e] for e in ESTADOS][::-1]
     cores = [COR[e] for e in ESTADOS][::-1]
